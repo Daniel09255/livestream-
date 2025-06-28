@@ -59,7 +59,7 @@ Just open `index.html` in a modern browser (Chrome, Edge, Firefox). All features
 
 ## 🧪 Demo
 
-🔗 [Live Demo Link](https://daniel09255.github.io/livestream-app/) 
+🔗 [Live Demo Link](https://livestream-app.netlify.app/) 
 
 ---
 
