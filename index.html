@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Livestream Name Display</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Playfair+Display:wght@600&display=swap');
+    :root {
+      --input-height: 60px;
+    }
+    body {
+      margin: 0;
+      background: linear-gradient(270deg, #0f0c29, #302b63, #24243e);
+      background-size: 600% 600%;
+      font-family: 'Dancing Script', cursive;
+      height: 100vh;
+      color: white;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      animation: animatedGradient 20s ease infinite;
+    }
+    @keyframes animatedGradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 80px;
+      line-height: 30px;
+      background: linear-gradient(to bottom, #111, transparent);
+      z-index: 5;
+      font-size: 24px;
+      font-weight: bold;
+      font-family: 'Playfair Display', serif;
+      text-align: center;
+      pointer-events: none;
+      user-select: none;
+    }
+    #nameInput {
+      width: 100%;
+      height: var(--input-height);
+      padding: 15px;
+      font-size: 20px;
+      font-family: monospace;
+      border: none;
+      outline: none;
+      box-sizing: border-box;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      background-color: #222;
+      color: white;
+      z-index: 4;
+    }
+    #namesWrapper {
+      position: relative;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      overflow: hidden;
+      padding-bottom: calc(var(--input-height) + 110px);
+    }
+    #namesDisplay {
+      position: absolute;
+      bottom: calc(var(--input-height) + 90px);
+      width: 100%;
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 0 20px;
+      box-sizing: border-box;
+    }
+    .nameEntry {
+      animation: glowFadeIn 0.5s ease forwards;
+      font-weight: bold;
+      word-break: break-word;
+      transition: all 0.3s ease;
+    }
+    .nameEntry.recent { align-self: center; }
+    .small-emoji {
+      font-size: 1.5rem;
+      vertical-align: middle;
+      margin-left: 10px;
+      text-shadow: none !important;
+    }
+    .nameEntry:not(.recent) .small-emoji {
+      text-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
+    }
+    .nameEntry:nth-child(1) { font-size: 3rem; opacity: 1; }
+    .nameEntry:nth-child(2) { font-size: 2.5rem; opacity: 0.85; }
+    .nameEntry:nth-child(3) { font-size: 2rem;  opacity: 0.7; }
+    .nameEntry:nth-child(4) { font-size: 1.5rem; opacity: 0.55; }
+    .nameEntry:nth-child(n+5) { font-size: 1.2rem; opacity: 0.4; }
+    @keyframes glowFadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .floating-heart {
+      position: absolute;
+      bottom: -50px;
+      font-size: 24px;
+      animation: floatUp 6s linear infinite;
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    @keyframes floatUp {
+      0%   { transform: translateY(0) scale(1);   opacity: 0.6; }
+      100% { transform: translateY(-120vh) scale(1.5); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <header>👍 Like and Share Name in the Comments</header>
+  <div id="namesWrapper">
+    <div id="namesDisplay"></div>
+  </div>
+  <input id="nameInput" placeholder="Type a name and hit Enter..." />
+  <audio id="pingSound" src="https://cdn.jsdelivr.net/gh/napthedev/sounds@main/ping.mp3" preload="auto"></audio>
+
+  <script>
+    const nameInput = document.getElementById('nameInput');
+    const namesDisplay = document.getElementById('namesDisplay');
+    const pingSound = document.getElementById('pingSound');
+
+    const colors = ['#ff007f','#00ffff','#39ff14','#ffa500','#ff00ff','#00ff7f','#ff4500','#1e90ff','#ff69b4','#00ffcc'];
+    const emojis = ['❤️','💖','💗','💝','💘','🥰','😍','💞','🌹','🙏','💐','🎁','🫶'];
+    let colorIndex = 0;
+    const getNextColor = () => colors[colorIndex++ % colors.length];
+    const getRandomEmoji = () => emojis[Math.floor(Math.random()*emojis.length)];
+
+    function createFloatingHeart(){
+      const heart = document.createElement('div');
+      heart.className = 'floating-heart';
+      heart.textContent = getRandomEmoji();
+      heart.style.left = Math.random()*100 + '%';
+      heart.style.animationDuration = 4 + Math.random()*3 + 's';
+      document.body.appendChild(heart);
+      setTimeout(()=>heart.remove(),7000);
+    }
+
+    const prefixes = ['Thank you','I see you','Love you'];
+    let prefixIndex = 0;
+    function singName(name){
+      if(!('speechSynthesis' in window)) return;
+      const utter = new SpeechSynthesisUtterance(`${prefixes[prefixIndex]} ${name}`);
+      prefixIndex = (prefixIndex+1) % prefixes.length;
+      const voices = speechSynthesis.getVoices();
+      if(voices.length){
+        utter.voice = voices.find(v=>/female|woman/i.test(v.name)&&v.lang.startsWith('en')) || voices.find(v=>v.lang.startsWith('en')) || voices[0];
+      }
+      utter.pitch = 1.6; utter.rate = 0.85; utter.volume = 1;
+      speechSynthesis.speak(utter);
+    }
+
+    nameInput.addEventListener('keydown', e=>{
+      if(e.key==='Enter' && nameInput.value.trim()){
+        const name = nameInput.value.trim();
+        const emoji = getRandomEmoji();
+
+        const div = document.createElement('div');
+        div.className = 'nameEntry recent';
+        div.innerHTML = `${name}<span class="small-emoji">${emoji}</span>`;
+        div.style.color = getNextColor();
+        div.style.textShadow = `0 0 10px ${div.style.color}, 0 0 20px ${div.style.color}`;
+
+        const prev = namesDisplay.querySelector('.nameEntry.recent');
+        if(prev){ prev.classList.remove('recent'); prev.style.alignSelf='flex-start'; }
+
+        namesDisplay.prepend(div);
+        nameInput.value = '';
+        if(namesDisplay.children.length>20) namesDisplay.removeChild(namesDisplay.lastChild);
+
+        pingSound.currentTime = 0; pingSound.play().catch(()=>{});
+        createFloatingHeart();
+        singName(name);
+      }
+    });
+
+    window.addEventListener('resize',()=> nameInput.scrollIntoView({block:'end'}));
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(() => console.log('Service Worker Registered'));
+    }
+  </script>
+</body>
+</html>
